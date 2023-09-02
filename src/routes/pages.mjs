@@ -31,23 +31,8 @@ router.get('/', function (req, res, next) {
 // =======================================================================
 // Get system & runtime info
 // =======================================================================
-import axios from 'axios';  // Make sure axios is imported at the top of your file
-
-router.get('/info', async function (req, res, next) {
-  let instanceId = 'Not running on EC2';
-  let instanceIp = 'Not running on EC2';
-  try {
-    const responseId = await axios.get('http://169.254.169.254/latest/meta-data/instance-id', { timeout: 1000 });
-    instanceId = responseId.data;
-
-    const responseIp = await axios.get('http://169.254.169.254/latest/meta-data/local-ipv4', { timeout: 1000 });
-    instanceIp = responseIp.data;
-  } catch (error) {
-    console.error('Could not get EC2 metadata:', error);
-  }
-
+router.get('/info', function (req, res, next) {
   const info = {
-    title: 'Node DemoApp: Info',
     release: os.release(),
     type: os.type(),
     cpus: os.cpus(),
@@ -57,13 +42,30 @@ router.get('/info', async function (req, res, next) {
     env: process.env.WEBSITE_SITE_NAME ? process.env.WEBSITE_SITE_NAME.split('-')[0] : 'Local',
     nodever: process.version,
     uptime: convertSeconds(os.uptime()),
-    instanceId: instanceId, // Add this line
-    instanceIp: instanceIp, // Add this line
-  };
+  }
 
-  res.render('info', info);
-});
+  const isKube = fs.existsSync('/var/run/secrets/kubernetes.io')
+  let isContainer = isKube || fs.existsSync('/.dockerenv')
 
+  // Fallback to try to detect containerd, only works when *NOT* in Kubernetes
+  if (!isContainer) {
+    try {
+      const cgroup = fs.readFileSync('/proc/1/cgroup', 'utf8')
+      if (cgroup.includes('containerd')) {
+        isContainer = true
+      }
+    } catch (err) {
+      isContainer = false
+    }
+  }
+
+  res.render('info', {
+    title: 'Node DemoApp: Info',
+    info: info,
+    isKube: isKube,
+    isContainer: isContainer,
+  })
+})
 
 // =======================================================================
 // Get monitor page
