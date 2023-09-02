@@ -36,7 +36,12 @@ const app = new express()
 const __dirname = path.resolve()
 app.set('views', [path.join(__dirname, 'views'), path.join(__dirname, 'todo')])
 app.set('view engine', 'ejs')
-app.use(express.static(path.join(__dirname, 'public')))
+app.use(express.static(path.join(__dirname, 'public'), {
+  maxAge: '1d',
+  setHeaders: function (res, path) {
+    res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=86400');
+  }
+}));
 
 // Session required for auth and MSAL signin flow
 const sessionConfig = {
