@@ -60,7 +60,7 @@ router.get('/info', async function (req, res, next) {
     instanceIp: instanceIp, // Add this line
   };
 
-  res.render('info', info);
+  res.render('info', { title: 'Node DemoApp: Info', info: info });
 });
 
 
