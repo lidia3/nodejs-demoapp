@@ -47,6 +47,7 @@ router.get('/info', async function (req, res, next) {
   }
 
   const info = {
+    title: 'Node DemoApp: Info',
     release: os.release(),
     type: os.type(),
     cpus: os.cpus(),
